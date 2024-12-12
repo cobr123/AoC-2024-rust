@@ -2,7 +2,8 @@ use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
-    part1().map(|count| println!("{}", count))
+    part1().map(|count| println!("{}", count))?;
+    part2().map(|count| println!("{}", count))
 }
 
 fn part1() -> io::Result<usize> {
@@ -15,6 +16,20 @@ fn part1() -> io::Result<usize> {
         .collect::<Vec<String>>()
         .join("\n");
     let count = count_xmas(text.trim());
+
+    Ok(count)
+}
+
+fn part2() -> io::Result<usize> {
+    let file = File::open("input.txt")?;
+    let reader = BufReader::new(file);
+
+    let text = reader
+        .lines()
+        .map(|x| x.unwrap())
+        .collect::<Vec<String>>()
+        .join("\n");
+    let count = count_mas(text.trim());
 
     Ok(count)
 }
@@ -37,6 +52,90 @@ fn count_xmas(text: &str) -> usize {
         + count_diagonal_l_to_r_rev(&table)
         + count_diagonal_r_to_l(&table)
         + count_diagonal_r_to_l_rev(&table)
+}
+
+fn count_mas(text: &str) -> usize {
+    let table = parse_text(text);
+    count_mas_top(&table)
+        + count_mas_right(&table)
+        + count_mas_bottom(&table)
+        + count_mas_left(&table)
+}
+
+fn count_mas_top(table: &Vec<Vec<XMAS>>) -> usize {
+    let mut count: usize = 0;
+    for row in 0..table.len() - 2 {
+        for col in 0..table[0].len() - 2 {
+            match (
+                table[row][col],
+                table[row][col + 2],
+                table[row + 1][col + 1],
+                table[row + 2][col],
+                table[row + 2][col + 2],
+            ) {
+                (XMAS::M, XMAS::M, XMAS::A, XMAS::S, XMAS::S) => count += 1,
+                _ => (),
+            }
+        }
+    }
+    count
+}
+
+fn count_mas_bottom(table: &Vec<Vec<XMAS>>) -> usize {
+    let mut count: usize = 0;
+    for row in 0..table.len() - 2 {
+        for col in 0..table[0].len() - 2 {
+            match (
+                table[row][col],
+                table[row][col + 2],
+                table[row + 1][col + 1],
+                table[row + 2][col],
+                table[row + 2][col + 2],
+            ) {
+                (XMAS::S, XMAS::S, XMAS::A, XMAS::M, XMAS::M) => count += 1,
+                _ => (),
+            }
+        }
+    }
+    count
+}
+
+fn count_mas_right(table: &Vec<Vec<XMAS>>) -> usize {
+    let mut count: usize = 0;
+    for row in 0..table.len() - 2 {
+        for col in 0..table[0].len() - 2 {
+            match (
+                table[row][col],
+                table[row][col + 2],
+                table[row + 1][col + 1],
+                table[row + 2][col],
+                table[row + 2][col + 2],
+            ) {
+                (XMAS::S, XMAS::M, XMAS::A, XMAS::S, XMAS::M) => count += 1,
+                _ => (),
+            }
+        }
+    }
+    count
+}
+
+fn count_mas_left(table: &Vec<Vec<XMAS>>) -> usize {
+    let mut count: usize = 0;
+    for row in 0..table.len() - 2 {
+        for col in 0..table[0].len() - 2 {
+            match (
+                table[row][col],
+                table[row][col + 2],
+                table[row + 1][col + 1],
+                table[row + 2][col],
+                table[row + 2][col + 2],
+            ) {
+                (XMAS::M, XMAS::S, XMAS::A, XMAS::M, XMAS::S) => count += 1,
+                _ => (),
+            }
+        }
+    }
+    count
 }
 
 fn count_horizontal(table: &Vec<Vec<XMAS>>) -> usize {
@@ -313,5 +412,62 @@ MXMXAXMASX",
             vec![XMAS::X, XMAS::M, XMAS::A, XMAS::S],
         ]);
         assert_eq!(result, 2);
+    }
+
+    #[test]
+    fn count_mas_top_test() {
+        let result = count_mas_top(&vec![
+            vec![XMAS::M, XMAS::M, XMAS::M],
+            vec![XMAS::X, XMAS::A, XMAS::A],
+            vec![XMAS::S, XMAS::M, XMAS::S],
+        ]);
+        assert_eq!(result, 1);
+    }
+
+    #[test]
+    fn count_mas_left_test() {
+        let result = count_mas_left(&vec![
+            vec![XMAS::M, XMAS::M, XMAS::S],
+            vec![XMAS::X, XMAS::A, XMAS::A],
+            vec![XMAS::M, XMAS::M, XMAS::S],
+        ]);
+        assert_eq!(result, 1);
+    }
+
+    #[test]
+    fn count_mas_right_test() {
+        let result = count_mas_right(&vec![
+            vec![XMAS::S, XMAS::M, XMAS::M],
+            vec![XMAS::X, XMAS::A, XMAS::A],
+            vec![XMAS::S, XMAS::M, XMAS::M],
+        ]);
+        assert_eq!(result, 1);
+    }
+
+    #[test]
+    fn count_mas_bottom_test() {
+        let result = count_mas_bottom(&vec![
+            vec![XMAS::S, XMAS::M, XMAS::S],
+            vec![XMAS::X, XMAS::A, XMAS::A],
+            vec![XMAS::M, XMAS::M, XMAS::M],
+        ]);
+        assert_eq!(result, 1);
+    }
+
+    #[test]
+    fn count_mas_test() {
+        let result = count_mas(
+            "MMMSXXMASM
+MSAMXMSMSA
+AMXSXMAAMM
+MSAMASMSMX
+XMASAMXAMM
+XXAMMXXAMA
+SMSMSASXSS
+SAXAMASAAA
+MAMMMXMMMM
+MXMXAXMASX",
+        );
+        assert_eq!(result, 9);
     }
 }
