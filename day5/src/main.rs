@@ -3,7 +3,8 @@ use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
-    part1().map(|count| println!("{}", count))
+    part1().map(|count| println!("{}", count))?;
+    part2().map(|count| println!("{}", count))
 }
 
 fn part1() -> io::Result<u32> {
@@ -20,6 +21,20 @@ fn part1() -> io::Result<u32> {
     Ok(sum)
 }
 
+fn part2() -> io::Result<u32> {
+    let file = File::open("input.txt")?;
+    let reader = BufReader::new(file);
+
+    let text = reader
+        .lines()
+        .map(|x| x.unwrap())
+        .collect::<Vec<String>>()
+        .join("\n");
+    let sum = sum_incorrect_middle_after_correction(text.trim());
+
+    Ok(sum)
+}
+
 fn sum_correct_middle(text: &str) -> u32 {
     let (rules, updates) = parse_text(text);
     updates
@@ -30,6 +45,43 @@ fn sum_correct_middle(text: &str) -> u32 {
             x[mid]
         })
         .sum()
+}
+
+fn sum_incorrect_middle_after_correction(text: &str) -> u32 {
+    let (rules, updates) = parse_text(text);
+    updates
+        .iter()
+        .filter(|x| !is_correct(x, &rules))
+        .map(|x| {
+            let mid = (x.len() - 1) / 2;
+            let corrected = correct_by_rules(x, &rules);
+            corrected[mid]
+        })
+        .sum()
+}
+
+fn correct_by_rules(update: &Vec<u32>, rules: &Vec<(u32, u32)>) -> Vec<u32> {
+    let mut corrected = update.clone();
+    let mut found = true;
+    while found {
+        found = false;
+        for (a, b) in rules {
+            for i in 0..corrected.len() {
+                if corrected[i] == *a {
+                    for k in (0..i).rev() {
+                        if corrected[k] == *b {
+                            corrected.remove(i);
+                            corrected.insert(k, *a);
+                            found = true;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    corrected
 }
 
 fn is_correct(update: &Vec<u32>, rules: &Vec<(u32, u32)>) -> bool {
@@ -80,7 +132,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn is_safe_increasing_true() {
+    fn sum_correct_middle_test() {
         let result = sum_correct_middle(
             "47|53
 97|13
@@ -112,5 +164,40 @@ mod tests {
 97,13,75,29,47",
         );
         assert_eq!(result, 143);
+    }
+
+    #[test]
+    fn sum_incorrect_middle_after_correction_test() {
+        let result = sum_incorrect_middle_after_correction(
+            "47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
+
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47",
+        );
+        assert_eq!(result, 123);
     }
 }
