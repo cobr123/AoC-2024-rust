@@ -103,9 +103,7 @@ fn nested(
     acc: &Vec<&Operator>,
 ) -> bool {
     if left == 0 {
-        if f(result, values, acc) {
-            return true;
-        }
+        return f(result, values, acc);
     } else {
         for operator in operators {
             let mut new_acc: Vec<&Operator> = vec![&operator];
