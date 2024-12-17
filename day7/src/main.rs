@@ -64,24 +64,18 @@ struct Equation {
 impl Equation {
     fn is_valid(&self, operators: &Vec<Operator>) -> bool {
         // println!("{} {:?}", self.result, self.values);
-        match self.values.len() - 1 {
-            1 => nested1(operators, self.result, &self.values, check_sum),
-            2 => nested2(operators, self.result, &self.values, check_sum),
-            3 => nested3(operators, self.result, &self.values, check_sum),
-            4 => nested4(operators, self.result, &self.values, check_sum),
-            5 => nested5(operators, self.result, &self.values, check_sum),
-            6 => nested6(operators, self.result, &self.values, check_sum),
-            7 => nested7(operators, self.result, &self.values, check_sum),
-            8 => nested8(operators, self.result, &self.values, check_sum),
-            9 => nested9(operators, self.result, &self.values, check_sum),
-            10 => nested10(operators, self.result, &self.values, check_sum),
-            11 => nested11(operators, self.result, &self.values, check_sum),
-            other => panic!("can't handle {other} operators"),
-        }
+        nested(
+            self.values.len() - 1,
+            operators,
+            self.result,
+            &self.values,
+            check_sum,
+            &Vec::new(),
+        )
     }
 }
 
-fn check_sum(result: u128, values: &Vec<u128>, operators: Vec<&Operator>) -> bool {
+fn check_sum(result: u128, values: &Vec<u128>, operators: &Vec<&Operator>) -> bool {
     let mut sum = values[0];
     for i in 0..operators.len() {
         sum = match operators[i] {
@@ -100,279 +94,24 @@ fn check_sum(result: u128, values: &Vec<u128>, operators: Vec<&Operator>) -> boo
     }
 }
 
-fn nested1(
+fn nested(
+    left: usize,
     operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
+    f: fn(u128, &Vec<u128>, &Vec<&Operator>) -> bool,
+    acc: &Vec<&Operator>,
 ) -> bool {
-    for o1 in operators {
-        if f(result, values, vec![o1]) {
+    if left == 0 {
+        if f(result, values, acc) {
             return true;
         }
-    }
-    false
-}
-
-fn nested2(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            if f(result, values, vec![o1, o2]) {
+    } else {
+        for operator in operators {
+            let mut new_acc: Vec<&Operator> = vec![&operator];
+            new_acc.extend(acc);
+            if nested(left - 1, operators, result, values, f, &new_acc) {
                 return true;
-            }
-        }
-    }
-    false
-}
-
-fn nested3(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                if f(result, values, vec![o1, o2, o3]) {
-                    return true;
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested4(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    if f(result, values, vec![o1, o2, o3, o4]) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested5(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        if f(result, values, vec![o1, o2, o3, o4, o5]) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested6(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        for o6 in operators {
-                            if f(result, values, vec![o1, o2, o3, o4, o5, o6]) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested7(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        for o6 in operators {
-                            for o7 in operators {
-                                if f(result, values, vec![o1, o2, o3, o4, o5, o6, o7]) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested8(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        for o6 in operators {
-                            for o7 in operators {
-                                for o8 in operators {
-                                    if f(result, values, vec![o1, o2, o3, o4, o5, o6, o7, o8]) {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested9(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        for o6 in operators {
-                            for o7 in operators {
-                                for o8 in operators {
-                                    for o9 in operators {
-                                        if f(
-                                            result,
-                                            values,
-                                            vec![o1, o2, o3, o4, o5, o6, o7, o8, o9],
-                                        ) {
-                                            return true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested10(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        for o6 in operators {
-                            for o7 in operators {
-                                for o8 in operators {
-                                    for o9 in operators {
-                                        for o10 in operators {
-                                            if f(
-                                                result,
-                                                values,
-                                                vec![o1, o2, o3, o4, o5, o6, o7, o8, o9, o10],
-                                            ) {
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-fn nested11(
-    operators: &Vec<Operator>,
-    result: u128,
-    values: &Vec<u128>,
-    f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
-) -> bool {
-    for o1 in operators {
-        for o2 in operators {
-            for o3 in operators {
-                for o4 in operators {
-                    for o5 in operators {
-                        for o6 in operators {
-                            for o7 in operators {
-                                for o8 in operators {
-                                    for o9 in operators {
-                                        for o10 in operators {
-                                            for o11 in operators {
-                                                if f(
-                                                    result,
-                                                    values,
-                                                    vec![
-                                                        o1, o2, o3, o4, o5, o6, o7, o8, o9, o10,
-                                                        o11,
-                                                    ],
-                                                ) {
-                                                    return true;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
