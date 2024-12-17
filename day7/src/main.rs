@@ -2,7 +2,8 @@ use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
-    part1().map(|sum| println!("{}", sum))
+    part1().map(|sum| println!("{}", sum))?;
+    part2().map(|sum| println!("{}", sum))
 }
 
 fn part1() -> io::Result<u128> {
@@ -19,15 +20,37 @@ fn part1() -> io::Result<u128> {
     Ok(sum)
 }
 
-fn get_total_calibration(text: &str) -> u128 {
-    let equations = parse_text(text);
-    sum_valid_equations(equations)
+fn part2() -> io::Result<u128> {
+    let file = File::open("input.txt")?;
+    let reader = BufReader::new(file);
+
+    let text = reader
+        .lines()
+        .map(|x| x.unwrap())
+        .collect::<Vec<String>>()
+        .join("\n");
+    let sum = get_total_calibration_with_concatenation(text.trim());
+
+    Ok(sum)
 }
 
-fn sum_valid_equations(equations: Vec<Equation>) -> u128 {
+fn get_total_calibration(text: &str) -> u128 {
+    let equations = parse_text(text);
+    sum_valid_equations(equations, &vec![Operator::Add, Operator::Multiply])
+}
+
+fn get_total_calibration_with_concatenation(text: &str) -> u128 {
+    let equations = parse_text(text);
+    sum_valid_equations(
+        equations,
+        &vec![Operator::Add, Operator::Multiply, Operator::Concatenation],
+    )
+}
+
+fn sum_valid_equations(equations: Vec<Equation>, operators: &Vec<Operator>) -> u128 {
     equations
         .iter()
-        .filter(|x| x.is_valid())
+        .filter(|x| x.is_valid(operators))
         .map(|x| x.result)
         .sum()
 }
@@ -39,20 +62,20 @@ struct Equation {
 }
 
 impl Equation {
-    fn is_valid(&self) -> bool {
+    fn is_valid(&self, operators: &Vec<Operator>) -> bool {
         // println!("{} {:?}", self.result, self.values);
         match self.values.len() - 1 {
-            1 => nested1(self.result, &self.values, check_sum),
-            2 => nested2(self.result, &self.values, check_sum),
-            3 => nested3(self.result, &self.values, check_sum),
-            4 => nested4(self.result, &self.values, check_sum),
-            5 => nested5(self.result, &self.values, check_sum),
-            6 => nested6(self.result, &self.values, check_sum),
-            7 => nested7(self.result, &self.values, check_sum),
-            8 => nested8(self.result, &self.values, check_sum),
-            9 => nested9(self.result, &self.values, check_sum),
-            10 => nested10(self.result, &self.values, check_sum),
-            11 => nested11(self.result, &self.values, check_sum),
+            1 => nested1(operators, self.result, &self.values, check_sum),
+            2 => nested2(operators, self.result, &self.values, check_sum),
+            3 => nested3(operators, self.result, &self.values, check_sum),
+            4 => nested4(operators, self.result, &self.values, check_sum),
+            5 => nested5(operators, self.result, &self.values, check_sum),
+            6 => nested6(operators, self.result, &self.values, check_sum),
+            7 => nested7(operators, self.result, &self.values, check_sum),
+            8 => nested8(operators, self.result, &self.values, check_sum),
+            9 => nested9(operators, self.result, &self.values, check_sum),
+            10 => nested10(operators, self.result, &self.values, check_sum),
+            11 => nested11(operators, self.result, &self.values, check_sum),
             other => panic!("can't handle {other} operators"),
         }
     }
@@ -64,6 +87,9 @@ fn check_sum(result: u128, values: &Vec<u128>, operators: Vec<&Operator>) -> boo
         sum = match operators[i] {
             Operator::Add => sum + values[i + 1],
             Operator::Multiply => sum * values[i + 1],
+            Operator::Concatenation => (sum.to_string() + values[i + 1].to_string().as_str())
+                .parse::<u128>()
+                .unwrap(),
         };
     }
     if result == sum {
@@ -75,11 +101,12 @@ fn check_sum(result: u128, values: &Vec<u128>, operators: Vec<&Operator>) -> boo
 }
 
 fn nested1(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
+    for o1 in operators {
         if f(result, values, vec![o1]) {
             return true;
         }
@@ -88,12 +115,13 @@ fn nested1(
 }
 
 fn nested2(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
             if f(result, values, vec![o1, o2]) {
                 return true;
             }
@@ -103,13 +131,14 @@ fn nested2(
 }
 
 fn nested3(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
                 if f(result, values, vec![o1, o2, o3]) {
                     return true;
                 }
@@ -120,14 +149,15 @@ fn nested3(
 }
 
 fn nested4(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
                     if f(result, values, vec![o1, o2, o3, o4]) {
                         return true;
                     }
@@ -139,15 +169,16 @@ fn nested4(
 }
 
 fn nested5(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
                         if f(result, values, vec![o1, o2, o3, o4, o5]) {
                             return true;
                         }
@@ -160,16 +191,17 @@ fn nested5(
 }
 
 fn nested6(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
-                        for o6 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
+                        for o6 in operators {
                             if f(result, values, vec![o1, o2, o3, o4, o5, o6]) {
                                 return true;
                             }
@@ -183,17 +215,18 @@ fn nested6(
 }
 
 fn nested7(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
-                        for o6 in &Operator::variants() {
-                            for o7 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
+                        for o6 in operators {
+                            for o7 in operators {
                                 if f(result, values, vec![o1, o2, o3, o4, o5, o6, o7]) {
                                     return true;
                                 }
@@ -208,18 +241,19 @@ fn nested7(
 }
 
 fn nested8(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
-                        for o6 in &Operator::variants() {
-                            for o7 in &Operator::variants() {
-                                for o8 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
+                        for o6 in operators {
+                            for o7 in operators {
+                                for o8 in operators {
                                     if f(result, values, vec![o1, o2, o3, o4, o5, o6, o7, o8]) {
                                         return true;
                                     }
@@ -235,19 +269,20 @@ fn nested8(
 }
 
 fn nested9(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
-                        for o6 in &Operator::variants() {
-                            for o7 in &Operator::variants() {
-                                for o8 in &Operator::variants() {
-                                    for o9 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
+                        for o6 in operators {
+                            for o7 in operators {
+                                for o8 in operators {
+                                    for o9 in operators {
                                         if f(
                                             result,
                                             values,
@@ -268,20 +303,21 @@ fn nested9(
 }
 
 fn nested10(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
-                        for o6 in &Operator::variants() {
-                            for o7 in &Operator::variants() {
-                                for o8 in &Operator::variants() {
-                                    for o9 in &Operator::variants() {
-                                        for o10 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
+                        for o6 in operators {
+                            for o7 in operators {
+                                for o8 in operators {
+                                    for o9 in operators {
+                                        for o10 in operators {
                                             if f(
                                                 result,
                                                 values,
@@ -303,21 +339,22 @@ fn nested10(
 }
 
 fn nested11(
+    operators: &Vec<Operator>,
     result: u128,
     values: &Vec<u128>,
     f: fn(u128, &Vec<u128>, Vec<&Operator>) -> bool,
 ) -> bool {
-    for o1 in &Operator::variants() {
-        for o2 in &Operator::variants() {
-            for o3 in &Operator::variants() {
-                for o4 in &Operator::variants() {
-                    for o5 in &Operator::variants() {
-                        for o6 in &Operator::variants() {
-                            for o7 in &Operator::variants() {
-                                for o8 in &Operator::variants() {
-                                    for o9 in &Operator::variants() {
-                                        for o10 in &Operator::variants() {
-                                            for o11 in &Operator::variants() {
+    for o1 in operators {
+        for o2 in operators {
+            for o3 in operators {
+                for o4 in operators {
+                    for o5 in operators {
+                        for o6 in operators {
+                            for o7 in operators {
+                                for o8 in operators {
+                                    for o9 in operators {
+                                        for o10 in operators {
+                                            for o11 in operators {
                                                 if f(
                                                     result,
                                                     values,
@@ -346,12 +383,7 @@ fn nested11(
 enum Operator {
     Add,
     Multiply,
-}
-
-impl Operator {
-    fn variants() -> Vec<Operator> {
-        vec![Operator::Add, Operator::Multiply]
-    }
+    Concatenation,
 }
 
 fn parse_text(text: &str) -> Vec<Equation> {
@@ -400,5 +432,21 @@ mod tests {
 69460233: 3 1 193 6 465 2 8 8 3 3 1",
         );
         assert_eq!(result, 69460233);
+    }
+
+    #[test]
+    fn get_total_calibration_with_concatenation_test() {
+        let result = get_total_calibration_with_concatenation(
+            "190: 10 19
+3267: 81 40 27
+83: 17 5
+156: 15 6
+7290: 6 8 6 15
+161011: 16 10 13
+192: 17 8 14
+21037: 9 7 18 13
+292: 11 6 16 20",
+        );
+        assert_eq!(result, 11387);
     }
 }
