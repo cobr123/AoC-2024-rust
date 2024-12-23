@@ -3,7 +3,8 @@ use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
-    part1().map(|sum| println!("{}", sum))
+    part1().map(|sum| println!("{}", sum))?;
+    part2().map(|sum| println!("{}", sum))
 }
 
 fn part1() -> io::Result<usize> {
@@ -20,6 +21,20 @@ fn part1() -> io::Result<usize> {
     Ok(sum)
 }
 
+fn part2() -> io::Result<usize> {
+    let file = File::open("input.txt")?;
+    let reader = BufReader::new(file);
+
+    let text = reader
+        .lines()
+        .map(|x| x.unwrap())
+        .collect::<Vec<String>>()
+        .join("\n");
+    let sum = get_distinct_trails_sum(text.trim());
+
+    Ok(sum)
+}
+
 fn get_trailheads_score_sum(text: &str) -> usize {
     let (start_positions, map) = parse_text(text);
     let mut sum = 0;
@@ -27,6 +42,15 @@ fn get_trailheads_score_sum(text: &str) -> usize {
         let mut acc = HashSet::new();
         count_score(start_position, &map, &mut acc);
         sum += acc.len();
+    }
+    sum
+}
+
+fn get_distinct_trails_sum(text: &str) -> usize {
+    let (start_positions, map) = parse_text(text);
+    let mut sum = 0;
+    for start_position in start_positions {
+        sum += count_trails(start_position, &map);
     }
     sum
 }
@@ -76,6 +100,61 @@ fn count_score(start: Pos, map: &Vec<Vec<u8>>, acc: &mut HashSet<Pos>) {
                 acc,
             );
         };
+    }
+}
+
+fn count_trails(start: Pos, map: &Vec<Vec<u8>>) -> usize {
+    let current = map[start.row][start.col];
+    if current == 9 {
+        1
+    } else {
+        let up = if start.row > 0 && map[start.row - 1][start.col] == current + 1 {
+            count_trails(
+                Pos {
+                    row: start.row - 1,
+                    col: start.col,
+                },
+                map,
+            )
+        } else {
+            0
+        };
+        let down = if start.row + 1 < map.len() && map[start.row + 1][start.col] == current + 1 {
+            count_trails(
+                Pos {
+                    row: start.row + 1,
+                    col: start.col,
+                },
+                map,
+            )
+        } else {
+            0
+        };
+        let left = if start.col > 0 && map[start.row][start.col - 1] == current + 1 {
+            count_trails(
+                Pos {
+                    row: start.row,
+                    col: start.col - 1,
+                },
+                map,
+            )
+        } else {
+            0
+        };
+        let right = if start.col + 1 < map[start.row].len()
+            && map[start.row][start.col + 1] == current + 1
+        {
+            count_trails(
+                Pos {
+                    row: start.row,
+                    col: start.col + 1,
+                },
+                map,
+            )
+        } else {
+            0
+        };
+        up + down + left + right
     }
 }
 
@@ -168,5 +247,61 @@ mod tests {
 10456732",
         );
         assert_eq!(result, 36);
+    }
+
+    #[test]
+    fn get_distinct_trails_sum3_test() {
+        let result = get_distinct_trails_sum(
+            ".....0.
+..4321.
+..5..2.
+..6543.
+..7..4.
+..8765.
+..9....",
+        );
+        assert_eq!(result, 3);
+    }
+
+    #[test]
+    fn get_distinct_trails_sum13_test() {
+        let result = get_distinct_trails_sum(
+            "..90..9
+...1.98
+...2..7
+6543456
+765.987
+876....
+987....",
+        );
+        assert_eq!(result, 13);
+    }
+
+    #[test]
+    fn get_distinct_trails_sum227_test() {
+        let result = get_distinct_trails_sum(
+            "012345
+123456
+234567
+345678
+4.6789
+56789.",
+        );
+        assert_eq!(result, 227);
+    }
+
+    #[test]
+    fn get_distinct_trails_sum81_test() {
+        let result = get_distinct_trails_sum(
+            "89010123
+78121874
+87430965
+96549874
+45678903
+32019012
+01329801
+10456732",
+        );
+        assert_eq!(result, 81);
     }
 }
