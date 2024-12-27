@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, prelude::*, BufReader};
 
 fn main() -> io::Result<()> {
-    part1().map(|count| println!("{}", count))
+    part1().map(|count| println!("{}", count))?;
+    part2().map(|count| println!("{}", count))
 }
 
 fn part1() -> io::Result<u128> {
@@ -15,6 +17,20 @@ fn part1() -> io::Result<u128> {
         .collect::<Vec<String>>()
         .join("\n");
     let count = count(text.trim());
+
+    Ok(count)
+}
+
+fn part2() -> io::Result<u128> {
+    let file = File::open("input.txt")?;
+    let reader = BufReader::new(file);
+
+    let text = reader
+        .lines()
+        .map(|x| x.unwrap())
+        .collect::<Vec<String>>()
+        .join("\n");
+    let count = blink_with_count(text.trim(), 75);
 
     Ok(count)
 }
@@ -55,6 +71,51 @@ fn blink(line: &str, left: usize) -> String {
         .map(|x| format!("{x}"))
         .collect::<Vec<String>>()
         .join(" ")
+}
+
+fn blink_with_count(line: &str, left: usize) -> u128 {
+    let mut cache = HashMap::new();
+    for num in parse_line(line) {
+        match cache.get(&num) {
+            Some(count) => cache.insert(num, *count + 1),
+            None => cache.insert(num, 1),
+        };
+    }
+    for _ in 0..left {
+        let mut new_cache = HashMap::new();
+        for (num, cnt) in cache {
+            if num == 0 {
+                let new_num = 1;
+                match new_cache.get(&new_num) {
+                    Some(count) => new_cache.insert(new_num, *count + cnt),
+                    None => new_cache.insert(new_num, cnt),
+                };
+            } else if num.to_string().len() % 2 == 0 {
+                let n_string = num.to_string();
+                let (left_half, right_half) = n_string.split_at(n_string.len() / 2);
+                // println!("{} = {} | {}", n_string, left_half, right_half);
+                let new_num_left = left_half.parse::<u128>().unwrap();
+                match new_cache.get(&new_num_left) {
+                    Some(count) => new_cache.insert(new_num_left, *count + cnt),
+                    None => new_cache.insert(new_num_left, cnt),
+                };
+                let new_num_right = right_half.parse::<u128>().unwrap();
+                match new_cache.get(&new_num_right) {
+                    Some(count) => new_cache.insert(new_num_right, *count + cnt),
+                    None => new_cache.insert(new_num_right, cnt),
+                };
+            } else {
+                let new_num = num * 2024;
+                match new_cache.get(&new_num) {
+                    Some(count) => new_cache.insert(new_num, *count + cnt),
+                    None => new_cache.insert(new_num, cnt),
+                };
+            }
+        }
+        cache = new_cache;
+        // println!("{:?}",cache);
+    }
+    cache.values().sum()
 }
 
 #[cfg(test)]
@@ -110,5 +171,11 @@ mod tests {
     fn blink25_test() {
         let result = blink("125 17", 25);
         assert_eq!(parse_line(result.as_str()).len(), 55312);
+    }
+
+    #[test]
+    fn blink_with_count25_test() {
+        let result = blink_with_count("125 17", 25);
+        assert_eq!(result, 55312);
     }
 }
